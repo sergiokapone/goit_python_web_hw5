@@ -18,7 +18,10 @@ ws.onmessage = (e) => {
   response = response.replace(/'/g, '"');
 
   try {
-    const jsonData = JSON.parse(response);
+    const jsonData = JSON.parse(response.replace(/None/g, "null")).filter(
+      (item) => item !== null
+    );
+    console.log(jsonData);
 
     for (const dateRate of jsonData) {
       for (const date in dateRate) {
