@@ -5,22 +5,21 @@ import re
 import aiohttp
 import websockets
 import names
-from websockets import WebSocketServerProtocol
-from websockets.exceptions import ConnectionClosedOK
 
 logging.basicConfig(level=logging.INFO)
+
 BASE_URL = "https://api.privatbank.ua/p24api/exchange_rates"
 
 
 class Server:
     clients = set()
 
-    async def register(self, ws: WebSocketServerProtocol):
+    async def register(self, ws: websockets.WebSocketServerProtocol):
         ws.name = names.get_full_name()
         self.clients.add(ws)
         logging.info(f"{ws.remote_address} connects")
 
-    async def unregister(self, ws: WebSocketServerProtocol):
+    async def unregister(self, ws: websockets.WebSocketServerProtocol):
         self.clients.remove(ws)
         logging.info(f"{ws.remote_address} disconnects")
 
@@ -28,16 +27,16 @@ class Server:
         if self.clients:
             [await client.send(message) for client in self.clients]
 
-    async def ws_handler(self, ws: WebSocketServerProtocol):
+    async def ws_handler(self, ws: websockets.WebSocketServerProtocol):
         await self.register(ws)
         try:
-            await self.distrubute(ws)
-        except ConnectionClosedOK:
+            await self.distribute(ws)
+        except websockets.exceptions.ConnectionClosedOK:
             pass
         finally:
             await self.unregister(ws)
 
-    async def distrubute(self, ws: WebSocketServerProtocol):
+    async def distribute(self, ws: websockets.WebSocketServerProtocol):
         async for message in ws:
             keyword, number = parse(message)
             if keyword == "exchange":
@@ -56,7 +55,7 @@ async def fetch_exchange_rate(currencies, date):
     async with aiohttp.ClientSession() as session:
         date = date.strftime("%d.%m.%Y")
         url = f"{BASE_URL}?json&date={date}"
-        headers = {"Accept": "application/json"}  # Указываем заголовок Accept
+        headers = {"Accept": "application/json"}
 
         async with session.get(url, headers=headers) as response:
             try:
@@ -77,8 +76,7 @@ async def fetch_exchange_rate(currencies, date):
                             )
                     return date_rates
             except aiohttp.ClientError as e:
-                print(f"Error {e}, when occcurind data")
-                return None
+                logging.warning(f"Error {e}, when occuring data")
 
 
 async def fetch_exchange_rates(currencies, days):
@@ -94,17 +92,15 @@ async def fetch_exchange_rates(currencies, days):
 async def main():
     server = Server()
     async with websockets.serve(server.ws_handler, "localhost", 8080):
-        await asyncio.Future()  # run forever
+        await asyncio.Future()
 
 
 def parse(message):
-
     pattern = r"(exchange)\s*(\d+)?"
-
     match = re.search(pattern, message)
 
     if match:
-        keyword = match.group(1)  # Слово "exchange"
+        keyword = match.group(1)
         number = int(match.group(2)) if match.group(2) else 1
         return keyword, number
 
