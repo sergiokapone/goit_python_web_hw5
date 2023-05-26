@@ -73,8 +73,8 @@ async def fetch_exchange_rate(currencies, date):
                     date_rates = {
                         date: {
                             rate["currency"]: {
-                                "sale": rate["saleRate"],
-                                "purchase": rate["purchaseRateNB"],
+                                "sale": f'{float(rate["saleRate"]):.2f}',
+                                "purchase": f'{float(rate["purchaseRateNB"]):.2f}',
                             }
                             for rate in rates
                             if rate["currency"] in currencies
