@@ -13,12 +13,10 @@ ws.onopen = (e) => {
 };
 
 ws.onmessage = (e) => {
-  console.log(e.data);
   const response = e.data.replace(/'/g, '"').replace(/None/g, "null");
 
   try {
     const jsonData = JSON.parse(response).filter((item) => item !== null);
-    console.log(jsonData);
 
     for (const dateRate of jsonData) {
       for (const date in dateRate) {
