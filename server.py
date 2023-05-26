@@ -45,6 +45,9 @@ class Server:
                         f"{ws.name}: Number of days should be less than 10"
                     )
                 else:
+                    await self.send_to_clients(
+                        f"{ws.name}: I start to request data for you. You can drink some cofee, or chat with me. "  # noqa
+                    )
                     asyncio.create_task(
                         self.process_exchange_request(["USD", "EUR"], number)
                     )
