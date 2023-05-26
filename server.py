@@ -40,9 +40,14 @@ class Server:
         async for message in ws:
             keyword, number = parse(message)
             if keyword == "exchange":
-                asyncio.create_task(
-                    self.process_exchange_request(["USD", "EUR"], number)
-                )
+                if number > 10:
+                    await self.send_to_clients(
+                        f"{ws.name}: Number of days should be less than 10"
+                    )
+                else:
+                    asyncio.create_task(
+                        self.process_exchange_request(["USD", "EUR"], number)
+                    )
             else:
                 await self.send_to_clients(f"{ws.name}: {message}")
 
